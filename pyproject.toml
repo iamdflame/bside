@@ -10,7 +10,7 @@ dependencies = [
     "genblaze>=0.4",
     "genblaze-assemblyai",
     "genblaze-google",
-    "genblaze-nvidia",
+    "genblaze-nvidia[chat]",
     "genblaze-elevenlabs",
     "pydantic>=2.7",
     "pydantic-settings>=2.3",

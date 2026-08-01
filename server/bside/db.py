@@ -169,7 +169,9 @@ def claim_ready_job() -> dict[str, Any] | None:
         return job
 
 
-def finish_job(job_id: int, status: str, error: str | None = None, next_attempt_at: str | None = None) -> None:
+def finish_job(
+    job_id: int, status: str, error: str | None = None, next_attempt_at: str | None = None
+) -> None:
     with tx() as c:
         c.execute(
             "UPDATE jobs SET status=?, error=?, next_attempt_at=COALESCE(?, next_attempt_at), "

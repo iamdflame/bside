@@ -150,7 +150,7 @@ def build_karaoke_ass(
     base, accent, paper = design.resolve_palette(palette)
 
     def hx(rgb: tuple[int, int, int]) -> str:
-        return "#%02x%02x%02x" % rgb
+        return "#{:02x}{:02x}{:02x}".format(*rgb)
 
     primary = _ass_color(hx(accent))          # after being spoken
     secondary = _ass_color(hx(paper), 0x50)   # before being spoken (dimmed)
@@ -237,7 +237,9 @@ class AudiogramProvider(SyncProvider):
             elif a.media_type.startswith("image/") and art_in is None:
                 art_in = a
         if audio_in is None:
-            raise ProviderError("audiogram requires an audio input", error_code=ProviderErrorCode.INVALID_INPUT)
+            raise ProviderError(
+                "audiogram requires an audio input", error_code=ProviderErrorCode.INVALID_INPUT
+            )
 
         out = self._output_dir / f"{step.step_id}.mp4"
         with tempfile.TemporaryDirectory(prefix="bside-agram-") as td:
@@ -265,7 +267,7 @@ class AudiogramProvider(SyncProvider):
             ass_path.write_text(build_karaoke_ass(local_words, palette=palette), encoding="utf-8")
 
             base, accent, paper = design.resolve_palette(palette)
-            wave_color = "0x%02x%02x%02x" % accent
+            wave_color = "0x{:02x}{:02x}{:02x}".format(*accent)
 
             filter_complex = (
                 "[1:a]asetpts=PTS-STARTPTS,aformat=sample_fmts=fltp:channel_layouts=stereo[a0];"

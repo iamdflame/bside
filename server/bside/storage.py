@@ -29,7 +29,7 @@ from bside.models import Episode, Show
 
 log = logging.getLogger("bside.storage")
 
-_lock = threading.Lock()
+_lock = threading.RLock()  # RLock: sink() calls backend() under the same lock
 _backend: S3StorageBackend | None = None
 _sink: ObjectStorageSink | None = None
 
@@ -47,7 +47,12 @@ def backend() -> S3StorageBackend:
 
 
 def sink() -> ObjectStorageSink:
-    """Genblaze ObjectStorageSink — HIERARCHICAL, tenant-partitioned by show."""
+    """Genblaze ObjectStorageSink — HIERARCHICAL, tenant-partitioned by show.
+
+    Long-lived singleton: Pipeline.run() closes run-scoped sinks by default,
+    so we use the SDK's documented opt-out (`_close_with_run = False`) to
+    keep one sink (and its backend) alive across the app's many runs.
+    """
     global _sink
     with _lock:
         if _sink is None:
@@ -56,6 +61,7 @@ def sink() -> ObjectStorageSink:
                 prefix=keys.SINK_PREFIX,
                 key_strategy=KeyStrategy.HIERARCHICAL,
             )
+            _sink._close_with_run = False  # SDK opt-out: caller owns lifecycle
         return _sink
 
 

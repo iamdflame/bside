@@ -42,8 +42,12 @@ class Settings(BaseSettings):
     rate_limit_per_minute: int = Field(default=30, alias="BSIDE_RATE_PER_MIN")
 
     # Models (overridable without code changes)
-    stt_model: str = Field(default="universal", alias="BSIDE_STT_MODEL")
+    stt_model: str = Field(default="universal-3-5-pro", alias="BSIDE_STT_MODEL")
+    stt_fallback_models: str = Field(default="universal-2", alias="BSIDE_STT_FALLBACKS")
     chat_model: str = Field(default="gemini-2.5-flash", alias="BSIDE_CHAT_MODEL")
+    chat_model_nvidia: str = Field(
+        default="meta/llama-3.3-70b-instruct", alias="BSIDE_CHAT_MODEL_NVIDIA"
+    )
     image_model_nvidia: str = Field(
         default="black-forest-labs/flux.1-dev", alias="BSIDE_IMAGE_MODEL_NVIDIA"
     )

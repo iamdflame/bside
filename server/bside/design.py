@@ -49,7 +49,9 @@ def _luminance(rgb: tuple[int, int, int]) -> float:
     return 0.2126 * r + 0.7152 * g + 0.0722 * b
 
 
-def resolve_palette(palette: list[str]) -> tuple[tuple[int, int, int], tuple[int, int, int], tuple[int, int, int]]:
+def resolve_palette(
+    palette: list[str],
+) -> tuple[tuple[int, int, int], tuple[int, int, int], tuple[int, int, int]]:
     """(base, accent, paper) — base darkest, paper lightest, accent most saturated."""
     rgbs = [_hex_rgb(p) for p in palette[:3]] or [(11, 14, 26)]
     while len(rgbs) < 3:

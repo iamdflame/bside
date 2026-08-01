@@ -75,6 +75,16 @@ def breaker_states() -> dict[str, str]:
 # ---------- provider factories (lazy imports keep cold start fast) ----------
 
 
+def _provider_tmp() -> str:
+    """Provider outputs must land under a sink-allowed root (temp)."""
+    import tempfile
+    from pathlib import Path
+
+    d = Path(tempfile.gettempdir()) / "bside-provider-out"
+    d.mkdir(parents=True, exist_ok=True)
+    return str(d)
+
+
 def stt_provider():
     from genblaze_assemblyai import AssemblyAIProvider
 
@@ -84,13 +94,13 @@ def stt_provider():
 def gemini_image_provider():
     from genblaze_google import GeminiImageProvider
 
-    return GeminiImageProvider(api_key=settings().gemini_api_key or None)
+    return GeminiImageProvider(api_key=settings().gemini_api_key or None, output_dir=_provider_tmp())
 
 
 def nvidia_image_provider():
     from genblaze_nvidia import NvidiaImageProvider
 
-    return NvidiaImageProvider(api_key=settings().nvidia_api_key or None)
+    return NvidiaImageProvider(api_key=settings().nvidia_api_key or None, output_dir=_provider_tmp())
 
 
 def image_plan() -> list[tuple[str, str]]:
@@ -109,20 +119,60 @@ def image_plan() -> list[tuple[str, str]]:
 
 
 def gemini_chat(prompt: str, *, system: str | None = None, json_mode: bool = True) -> str:
-    """LLM direction via the Genblaze google connector's chat() callable.
+    """LLM direction via Genblaze chat() callables, with a real fallback chain.
 
-    `chat(model, ...)` retries 429s with the server's Retry-After hint —
-    important on the free tier. Extra kwargs merge into generation_config,
-    so response_mime_type gives strict JSON mode.
+    Primary: Gemini (`genblaze_google.chat`, retries 429s with Retry-After).
+    Fallback: NVIDIA NIM chat (`genblaze_nvidia.chat`) when Gemini is
+    unconfigured, exhausted, or its breaker is open. The caller's provider
+    notes record which path produced the direction — honest labels, always.
     """
-    from genblaze_google import chat
+    s = settings()
+    errors: list[str] = []
 
-    resp = chat(
-        settings().chat_model,
-        prompt=prompt,
-        system=system,
-        api_key=settings().gemini_api_key or None,
-        retry_on_rate_limit=True,
-        **({"response_mime_type": "application/json"} if json_mode else {}),
-    )
-    return resp.text
+    if s.gemini_api_key and breaker("gemini-chat").allow():
+        try:
+            from genblaze_google import chat as g_chat
+
+            resp = g_chat(
+                s.chat_model,
+                prompt=prompt,
+                system=system,
+                api_key=s.gemini_api_key,
+                retry_on_rate_limit=True,
+                **({"response_mime_type": "application/json"} if json_mode else {}),
+            )
+            breaker("gemini-chat").record_success()
+            _last_chat_provider["name"] = f"google:{s.chat_model}"
+            return resp.text
+        except Exception as e:
+            breaker("gemini-chat").record_failure()
+            errors.append(f"gemini:{s.chat_model} → {type(e).__name__}: {str(e)[:140]}")
+
+    if s.nvidia_api_key and breaker("nvidia-chat").allow():
+        try:
+            from genblaze_nvidia import chat as n_chat
+
+            resp = n_chat(
+                s.chat_model_nvidia,
+                prompt=prompt,
+                system=(system or "") + ("\nRespond with valid JSON only." if json_mode else ""),
+                api_key=s.nvidia_api_key,
+                temperature=0.4,
+                max_tokens=4096,
+                timeout=120.0,
+            )
+            breaker("nvidia-chat").record_success()
+            _last_chat_provider["name"] = f"nvidia:{s.chat_model_nvidia}"
+            return resp.text
+        except Exception as e:
+            breaker("nvidia-chat").record_failure()
+            errors.append(f"nvidia:{s.chat_model_nvidia} → {type(e).__name__}: {str(e)[:140]}")
+
+    raise RuntimeError("all chat providers failed → " + " | ".join(errors or ["none configured"]))
+
+
+_last_chat_provider: dict[str, str] = {"name": ""}
+
+
+def last_chat_provider() -> str:
+    return _last_chat_provider["name"]

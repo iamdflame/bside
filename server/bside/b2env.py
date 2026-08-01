@@ -102,7 +102,6 @@ def normalize_b2_env() -> dict[str, str]:
             allowed = storage.get("allowed", {}) or auth.get("allowed", {})
             allowed_name = allowed.get("bucketName")
             allowed_id = allowed.get("bucketId")
-            api_url = storage.get("apiUrl") or auth.get("apiUrl", "")
             # apiUrl like https://api005.backblazeb2.com → region us-east-005 is NOT
             # derivable from the number alone; downloadUrl/s3ApiUrl carries it.
             s3_url = storage.get("s3ApiUrl") or auth.get("s3ApiUrl", "")
