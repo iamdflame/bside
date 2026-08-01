@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="360" height="84" viewBox="0 0 360 84">
+  <rect width="360" height="84" rx="16" fill="#0B0E1A"/>
+  <circle cx="46" cy="42" r="22" fill="none" stroke="#4C5FFF" stroke-width="5"/>
+  <circle cx="46" cy="42" r="14" fill="none" stroke="#F5F1E8" stroke-opacity="0.18" stroke-width="2"/>
+  <circle cx="46" cy="42" r="6.5" fill="#F5F1E8"/>
+  <text x="88" y="55" font-family="Georgia, 'Times New Roman', serif" font-size="40" fill="#F5F1E8">B‑Side</text>
+  <text x="232" y="52" font-family="ui-monospace, monospace" font-size="11" letter-spacing="2.5" fill="#4C5FFF">RELEASE KIT
+    <tspan x="232" dy="14">ENGINE</tspan>
+  </text>
+</svg>

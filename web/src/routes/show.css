@@ -1,0 +1,135 @@
+.show-head {
+  margin-bottom: var(--s6);
+}
+
+.show-head__swatch {
+  display: flex;
+  gap: var(--s1);
+  margin-bottom: var(--s3);
+}
+.show-head__swatch span {
+  width: 28px;
+  height: 8px;
+  border-radius: var(--r-full);
+}
+
+.show-head__name {
+  font-size: var(--text-2xl);
+}
+
+.show-head__tag {
+  color: var(--paper-dim);
+  margin-top: var(--s2);
+}
+
+.dropzone {
+  display: grid;
+  justify-items: center;
+  gap: var(--s2);
+  padding: var(--s7);
+  border: 1.5px dashed var(--line-strong);
+  border-radius: var(--r-lg);
+  cursor: pointer;
+  text-align: center;
+  transition: border-color var(--t-base) var(--ease-out), background var(--t-base) var(--ease-out),
+    transform var(--t-base) var(--ease-out);
+}
+.dropzone:hover {
+  border-color: var(--signal);
+  background: var(--signal-dim);
+}
+.dropzone--over {
+  border-color: var(--signal-bright);
+  background: var(--signal-dim);
+  transform: scale(1.01);
+}
+.dropzone--busy {
+  cursor: progress;
+}
+
+.dropzone__disc {
+  width: 54px;
+  height: 54px;
+  border-radius: 50%;
+  border: 3px solid var(--signal);
+  position: relative;
+  margin-bottom: var(--s2);
+}
+.dropzone__disc::after {
+  content: "";
+  position: absolute;
+  inset: 30%;
+  border-radius: 50%;
+  background: var(--paper);
+}
+.dropzone__disc--spin {
+  border-top-color: transparent;
+  animation: spin 0.9s linear infinite;
+}
+
+.dropzone__title {
+  font-size: var(--text-lg);
+}
+
+.dropzone__sub {
+  color: var(--paper-faint);
+  font-size: var(--text-sm);
+}
+
+.dropzone__error {
+  color: var(--coral);
+  font-size: var(--text-sm);
+}
+
+.eplist {
+  margin-top: var(--s7);
+}
+
+.eplist__head {
+  margin-bottom: var(--s4);
+}
+
+.eplist__empty {
+  color: var(--paper-faint);
+}
+
+.eplist__items {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--s2);
+}
+
+.ep-row {
+  display: flex;
+  align-items: center;
+  gap: var(--s4);
+  padding: var(--s4) var(--s5);
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  background: var(--ink-2);
+  transition: border-color var(--t-fast) var(--ease-out), transform var(--t-fast) var(--ease-out);
+}
+.ep-row:hover {
+  border-color: var(--line-strong);
+  transform: translateX(3px);
+}
+
+.ep-row__title {
+  flex: 1;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ep-row__meta {
+  white-space: nowrap;
+}
+
+@media (max-width: 640px) {
+  .ep-row__meta {
+    display: none;
+  }
+}

@@ -170,6 +170,7 @@ def regenerate(ep_id: str, asset_id: str) -> None:
 
     emit(ep.id, "asset.regenerating", {"asset_id": asset_id})
     new = regenerate_asset(ep, ctx, asset_id)
+    ep.status = "in_review"  # the new generation needs a human decision before sealing
     _persist(ep)
     emit(ep.id, "asset.regenerated", {
         "old_asset_id": asset_id, "new_asset_id": new.id,

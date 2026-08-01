@@ -14,6 +14,7 @@ import re
 import threading
 import time
 from collections import defaultdict, deque
+from contextlib import asynccontextmanager
 from pathlib import Path
 
 from fastapi import FastAPI, Form, HTTPException, Request, UploadFile
@@ -35,7 +36,21 @@ from bside.providers import breaker_states
 
 log = logging.getLogger("bside.api")
 
-app = FastAPI(title="B-Side", docs_url="/api/docs", openapi_url="/api/openapi.json")
+
+@asynccontextmanager
+async def lifespan(_app: FastAPI):
+    db.init_db()
+    events.bind_loop(asyncio.get_running_loop())
+    worker.start_worker(concurrency=settings().max_concurrent_pipelines)
+    worker.cleanup_workdirs()
+    log.info("b-side up — providers: %s", settings().provider_status())
+    yield
+    worker.stop_worker()
+
+
+app = FastAPI(
+    title="B-Side", docs_url="/api/docs", openapi_url="/api/openapi.json", lifespan=lifespan
+)
 
 ALLOWED_AUDIO = {
     "audio/mpeg": ".mp3",
@@ -77,18 +92,6 @@ async def rate_limit(request: Request, call_next):
                 return JSONResponse({"error": "rate limited — try again in a minute"}, status_code=429)
             q.append(now)
     return await call_next(request)
-
-
-# ---------- lifecycle ----------
-
-
-@app.on_event("startup")
-async def startup() -> None:
-    db.init_db()
-    events.bind_loop(asyncio.get_running_loop())
-    worker.start_worker(concurrency=settings().max_concurrent_pipelines)
-    worker.cleanup_workdirs()
-    log.info("b-side up — providers: %s", settings().provider_status())
 
 
 # ---------- health & meta ----------
@@ -364,6 +367,88 @@ def restore() -> dict:
             db.upsert_episode(ep.id, ep.show_id, ep.status, ep.model_dump(mode="json"))
             eps += 1
     return {"shows": shows, "episodes": eps, "ms": round((time.monotonic() - t0) * 1000)}
+
+
+# ---------- release ----------
+
+
+@app.get("/api/episodes/{ep_id}/release")
+def release_url(ep_id: str) -> dict:
+    doc = db.get_episode(ep_id)
+    if not doc:
+        raise HTTPException(404, "episode not found")
+    ep = Episode.model_validate(doc)
+    if not ep.release_key:
+        raise HTTPException(409, "kit not sealed yet")
+    return {
+        "key": ep.release_key,
+        "version": ep.release_version,
+        "url": storage.presigned_url(ep.release_key, expires_in=900),
+    }
+
+
+# ---------- judge mode ----------
+
+FIXTURE_AUDIO = Path(__file__).resolve().parents[3] / "fixtures" / "demo-episode.mp3"
+JUDGE_SHOW_NAME = "Signal Path"
+
+
+def _judge_show_id() -> str | None:
+    for s in db.list_shows():
+        if s.get("name") == JUDGE_SHOW_NAME:
+            return s["id"]
+    return None
+
+
+@app.get("/api/judge")
+def judge_info() -> dict:
+    """Everything a judge needs on one endpoint: demo state + live health."""
+    s = settings()
+    show_id = _judge_show_id()
+    episodes = db.list_episodes(show_id) if show_id else []
+    return {
+        "show_id": show_id,
+        "episodes": [
+            {"id": e["id"], "title": e["title"], "status": e["status"], "updated_at": e["updated_at"]}
+            for e in episodes[:10]
+        ],
+        "fixture_available": FIXTURE_AUDIO.exists(),
+        "providers": s.provider_status(),
+        "breakers": breaker_states(),
+        "limits": {
+            "daily_episodes": s.daily_episode_budget,
+            "max_audio_minutes": s.max_audio_minutes,
+        },
+    }
+
+
+@app.post("/api/judge/run")
+def judge_run() -> dict:
+    """One-click fresh pipeline run on the bundled fixture. Real providers,
+    real B2 writes, bounded by the same budgets as everyone else."""
+    if not FIXTURE_AUDIO.exists():
+        raise HTTPException(503, "demo fixture not bundled in this deployment")
+    show_id = _judge_show_id()
+    if not show_id:
+        show = Show(name=JUDGE_SHOW_NAME, tagline="How software actually gets shipped")
+        storage.save_show(show)
+        db.upsert_show(show.id, show.model_dump(mode="json"))
+        show_id = show.id
+    if not db.try_consume_daily_budget(settings().daily_episode_budget):
+        raise HTTPException(429, "daily episode budget reached — try tomorrow")
+
+    data = FIXTURE_AUDIO.read_bytes()
+    ep = Episode(
+        show_id=show_id,
+        title=f"Judge run — {time.strftime('%H:%M:%S UTC', time.gmtime())}",
+        source=SourceInfo(filename="demo-episode.mp3", media_type="audio/mpeg", size_bytes=len(data)),
+    )
+    (worker.workdir_for(ep.id) / "upload").write_bytes(data)
+    storage.save_episode(ep)
+    db.upsert_episode(ep.id, show_id, ep.status, ep.model_dump(mode="json"))
+    db.enqueue(ep.id, "process")
+    events.emit(ep.id, "episode.created", {"title": ep.title, "judge": True})
+    return {"episode_id": ep.id, "show_id": show_id}
 
 
 # ---------- static SPA ----------

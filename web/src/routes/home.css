@@ -1,0 +1,129 @@
+.hero {
+  padding-block: var(--s8) var(--s9);
+  max-width: 780px;
+}
+
+.hero__kicker {
+  color: var(--signal-bright);
+  margin-bottom: var(--s4);
+}
+
+.hero__title {
+  font-size: clamp(2.5rem, 6.5vw, var(--text-3xl));
+}
+.hero__title em {
+  color: var(--signal-bright);
+  font-style: italic;
+}
+
+.hero__sub {
+  margin-top: var(--s5);
+  max-width: 620px;
+  font-size: var(--text-md);
+  color: var(--paper-dim);
+}
+
+.hero__actions {
+  display: flex;
+  gap: var(--s3);
+  margin-top: var(--s6);
+  flex-wrap: wrap;
+}
+
+.hero__steps {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s2) var(--s3);
+  margin-top: var(--s7);
+  padding-top: var(--s5);
+  border-top: 1px solid var(--line);
+}
+
+.shows {
+  padding-bottom: var(--s8);
+}
+
+.shows__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: var(--s5);
+}
+
+.shows__title {
+  font-size: var(--text-xl);
+}
+
+.shows__create {
+  display: grid;
+  gap: var(--s3);
+  padding: var(--s5);
+  margin-bottom: var(--s5);
+  max-width: 520px;
+}
+
+.shows__error {
+  color: var(--coral);
+  font-size: var(--text-sm);
+}
+
+.shows__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: var(--s4);
+}
+
+.show-card {
+  padding: var(--s5);
+  display: grid;
+  gap: var(--s2);
+  transition: transform var(--t-base) var(--ease-out), border-color var(--t-base) var(--ease-out),
+    box-shadow var(--t-base) var(--ease-out);
+}
+.show-card:hover {
+  transform: translateY(-3px);
+  border-color: var(--line-strong);
+  box-shadow: var(--shadow-2);
+}
+
+.show-card--skeleton {
+  height: 150px;
+  border-radius: var(--r-lg);
+}
+
+.show-card__swatch {
+  display: flex;
+  gap: var(--s1);
+  margin-bottom: var(--s2);
+}
+.show-card__swatch span {
+  width: 22px;
+  height: 8px;
+  border-radius: var(--r-full);
+}
+
+.show-card__name {
+  font-size: var(--text-lg);
+}
+
+.show-card__tag {
+  color: var(--paper-dim);
+  font-size: var(--text-sm);
+  min-height: 1.4em;
+}
+
+.empty {
+  padding: var(--s7);
+  text-align: center;
+  display: grid;
+  gap: var(--s3);
+  justify-items: center;
+}
+.empty__title {
+  font-size: var(--text-lg);
+}
+.empty__sub {
+  color: var(--paper-dim);
+  max-width: 420px;
+  font-size: var(--text-sm);
+}
