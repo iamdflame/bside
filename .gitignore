@@ -1,0 +1,16 @@
+__pycache__/
+*.pyc
+.venv/
+venv/
+.env
+.env.*
+!.env.example
+data/
+out-smoke/
+dist/
+node_modules/
+web/dist/
+.pytest_cache/
+.ruff_cache/
+*.egg-info/
+.DS_Store
