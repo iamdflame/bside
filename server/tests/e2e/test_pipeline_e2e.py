@@ -108,10 +108,9 @@ def test_api_boots_and_serves_health(tmp_path, monkeypatch):
     from bside import config
 
     config.settings.cache_clear()
-    from fastapi.testclient import TestClient
-
     from bside import db
     from bside.api.app import app
+    from fastapi.testclient import TestClient
 
     db._local.__dict__.clear()
     # raise_server_exceptions=False: without B2 creds the create handler 500s,
