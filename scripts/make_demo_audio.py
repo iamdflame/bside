@@ -59,5 +59,5 @@ src = Path(asset.url.removeprefix("file://"))
 dest = OUT / "demo-episode.mp3"
 if src != dest:
     dest.write_bytes(src.read_bytes())
-print("demo audio:", dest, f"{dest.stat().st_size/1024:.0f} KB sha256={asset.sha256[:16]}")
+print("demo audio:", dest, f"{dest.stat().st_size/1024:.0f} KB sha256={(asset.sha256 or "unset")[:16]}")
 print("manifest verified:", result.manifest.verify())
