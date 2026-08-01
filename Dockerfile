@@ -24,5 +24,5 @@ ENV BSIDE_DATA_DIR=/data
 # /data is provided by a Railway Volume (platform-managed) — no VOLUME directive
 EXPOSE 8000
 
-# single service: API + durable worker + SPA
-CMD ["uvicorn", "bside.main:app", "--host", "0.0.0.0", "--port", "8000", "--log-level", "info"]
+# single service: API + durable worker + SPA (Railway injects PORT)
+CMD ["sh", "-c", "uvicorn bside.main:app --host 0.0.0.0 --port ${PORT:-8000} --log-level info"]
