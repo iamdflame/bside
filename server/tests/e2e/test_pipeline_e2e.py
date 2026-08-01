@@ -114,7 +114,9 @@ def test_api_boots_and_serves_health(tmp_path, monkeypatch):
     from bside.api.app import app
 
     db._local.__dict__.clear()
-    with TestClient(app) as client:
+    # raise_server_exceptions=False: without B2 creds the create handler 500s,
+    # which is exactly the boundary we want the limiter test to survive
+    with TestClient(app, raise_server_exceptions=False) as client:
         r = client.get("/api/health")
         assert r.status_code == 200
         body = r.json()
