@@ -349,8 +349,15 @@ async def sse_events(ep_id: str, request: Request, after: int = 0):
 
 @app.post("/api/restore")
 def restore() -> dict:
-    """Rebuild ALL local state from the bucket alone."""
+    """Rebuild ALL local state from the bucket alone.
+
+    True rebuild: the local read-model is wiped first, so what you see
+    afterwards is exactly what B2 holds — nothing more.
+    """
     t0 = time.monotonic()
+    with db.tx() as c:
+        c.execute("DELETE FROM shows")
+        c.execute("DELETE FROM episodes")
     shows, eps = 0, 0
     for show_id in storage.list_show_ids():
         try:

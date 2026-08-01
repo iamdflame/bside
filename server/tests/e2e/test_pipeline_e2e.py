@@ -99,12 +99,19 @@ def test_card_then_audiogram_pipeline_produces_verified_manifests(audio_fixture,
 
 def test_api_boots_and_serves_health(tmp_path, monkeypatch):
     monkeypatch.setenv("BSIDE_DATA_DIR", str(tmp_path))
+    # never let this test touch a real bucket — strip credentials
+    for var in ("B2_KEY_ID", "B2_APP_KEY", "B2_BUCKET", "B2_BUCKET_ID", "B2_REGION"):
+        monkeypatch.delenv(var, raising=False)
+    # and stop settings() from re-reading a local .env
+    monkeypatch.setattr("bside.b2env.load_dotenv", lambda *a, **k: None)
+    monkeypatch.setattr("bside.b2env.normalize_b2_env", lambda *a, **k: {})
     from bside import config
 
     config.settings.cache_clear()
+    from fastapi.testclient import TestClient
+
     from bside import db
     from bside.api.app import app
-    from fastapi.testclient import TestClient
 
     db._local.__dict__.clear()
     with TestClient(app) as client:
@@ -112,8 +119,9 @@ def test_api_boots_and_serves_health(tmp_path, monkeypatch):
         assert r.status_code == 200
         body = r.json()
         assert body["ok"] is True and "providers" in body
-        # rate limiter: POST hammering returns 429 eventually
+        assert body["b2"] is False  # credentials stripped — flag must be honest
+        # rate limiter: POST hammering returns 429 within the window
         codes = {client.post("/api/shows", json={"name": f"s{i}"}).status_code for i in range(45)}
-        assert 429 in codes or not body["b2"]  # without B2 creds creates fail differently
+        assert 429 in codes
     config.settings.cache_clear()
     db._local.__dict__.clear()
