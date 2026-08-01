@@ -21,7 +21,7 @@ COPY fixtures/ fixtures/
 COPY --from=web /app/web/dist web/dist
 
 ENV BSIDE_DATA_DIR=/data
-VOLUME ["/data"]
+# /data is provided by a Railway Volume (platform-managed) — no VOLUME directive
 EXPOSE 8000
 
 # single service: API + durable worker + SPA
