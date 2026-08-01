@@ -128,7 +128,8 @@ export function JudgePage() {
                   <span className={`health__dot ${on ? "health__dot--on" : ""}`} aria-hidden />
                   <span className="health__name">{PROVIDER_LABEL[name] ?? name}</span>
                   <span className="caps num">
-                    {info.breakers[breakerKey(name)] ?? (on ? "ready" : "not configured")}
+                    {BREAKER_LABEL[info.breakers[breakerKey(name)] ?? ""] ??
+                      (on ? "ready" : "not configured")}
                   </span>
                 </li>
               ))}
@@ -152,6 +153,12 @@ const PROVIDER_LABEL: Record<string, string> = {
   gemini: "Google Gemini (direction · image fallback)",
   nvidia: "NVIDIA NIM (FLUX art · chat fallback)",
   elevenlabs: "ElevenLabs (demo narration)",
+};
+
+const BREAKER_LABEL: Record<string, string> = {
+  closed: "healthy",
+  "half-open": "recovering",
+  open: "cooling down",
 };
 
 function breakerKey(provider: string): string {
