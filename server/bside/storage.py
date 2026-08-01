@@ -90,6 +90,18 @@ def presigned_url(key: str, expires_in: int = 3600) -> str:
     return backend().presigned_get(key, expires_in=expires_in).url
 
 
+def list_keys(prefix: str) -> list[str]:
+    """All keys under a prefix (paginated)."""
+    out: list[str] = []
+    token: str | None = None
+    while True:
+        page = backend().list(prefix=prefix, continuation_token=token)
+        out.extend(e.key for e in page.entries)
+        token = page.next_token
+        if not token:
+            return out
+
+
 def save_episode(ep: Episode) -> None:
     ep.touch()
     put_json(keys.episode_doc(ep.show_id, ep.id), ep.model_dump(mode="json"))
@@ -110,8 +122,8 @@ def load_show(show_id: str) -> Show:
 def list_show_ids() -> list[str]:
     """Discover shows straight from the bucket — the restore entry point."""
     ids: set[str] = set()
-    for obj in backend().list(prefix=keys.shows_list_prefix()):
-        parts = obj.key.split("/")
+    for key in list_keys(keys.shows_list_prefix()):
+        parts = key.split("/")
         if len(parts) >= 2 and parts[0] == keys.APP_PREFIX and parts[1]:
             ids.add(parts[1])
     return sorted(ids)
@@ -120,8 +132,8 @@ def list_show_ids() -> list[str]:
 def list_episode_ids(show_id: str) -> list[str]:
     ids: set[str] = set()
     prefix = f"{keys.APP_PREFIX}/{show_id}/episodes/"
-    for obj in backend().list(prefix=prefix):
-        rest = obj.key[len(prefix):]
+    for key in list_keys(prefix):
+        rest = key[len(prefix):]
         ep = rest.split("/", 1)[0]
         if ep:
             ids.add(ep)

@@ -8,7 +8,7 @@ voice, and the app degrades honestly (visible in the UI) without them.
 
 from __future__ import annotations
 
-import os
+import os  # noqa: F401  (env is the config surface)
 from functools import lru_cache
 from pathlib import Path
 
@@ -72,11 +72,10 @@ class Settings(BaseSettings):
 
 @lru_cache
 def settings() -> Settings:
+    from bside.b2env import load_dotenv, normalize_b2_env
+
+    load_dotenv()
+    normalize_b2_env()
     s = Settings()
     s.data_dir.mkdir(parents=True, exist_ok=True)
-    # genblaze_s3 reads these from env; normalize so one source of truth exists.
-    if s.b2_bucket and not os.environ.get("B2_BUCKET"):
-        os.environ["B2_BUCKET"] = s.b2_bucket
-    if s.b2_region and not os.environ.get("B2_REGION"):
-        os.environ["B2_REGION"] = s.b2_region
     return s
