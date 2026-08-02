@@ -4,7 +4,7 @@
 
 **Live app (judges):** https://bside-production.up.railway.app — no sign-in anywhere; start at **/judge**
 **Repo (public):** https://github.com/iamdflame/bside
-**Video:** (3-minute demo — see script below)
+**Video:** https://youtu.be/_o45OfY73SE
 
 ---
 
